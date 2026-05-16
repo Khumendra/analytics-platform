@@ -2,27 +2,44 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Activity, ShieldAlert, Layers, RefreshCw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState("");
-
-  // Simulated Login Sequence for testing/demo evaluation seamlessly
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const router = useRouter();
+ 
+  // Secure Token Retrieval Sequence
   useEffect(() => {
-    // Inject mock credentials structure matching your database setup
-    setToken("YOUR_JWT_ACCESS_TOKEN_HERE");
-    fetchMetrics();
-  }, []);
+    const secureToken = localStorage.getItem("access_token");
+    
+    if (!secureToken) {
+      router.replace("/login");
+      return;
+    }
 
-  const fetchMetrics = async () => {
-    setLoading(true);
+    setIsAuthorized(true);
+    fetchMetrics(secureToken);
+  }, [router]);
+
+  const fetchMetrics = async (authToken: string) => {
+    setLoading(true); 
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://analytics-backend-api.onrender.com";
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/dashboard/metrics/', {
+      const res = await fetch(`${backendUrl}/api/dashboard/metrics/`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${authToken}`
         }
       });
+
+      if (res.status === 401) {
+        // if token is invalid or expired, clear it and redirect to login
+        localStorage.clear();
+        router.replace("/login");
+        return;
+      }
+
       const result = await res.json();
       setData(result);
     } catch (err) {
@@ -32,9 +49,23 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return (
+  // Force Reload click handler with valid token pass
+  const handleForceReload = () => {
+    const secureToken = localStorage.getItem("access_token");
+    if (secureToken) {
+      fetchMetrics(secureToken);
+    } else {
+      router.replace("/login");
+    }
+  };
+ 
+  // While token is being verified or data is loading, show the loader
+  if (!isAuthorized || loading) return (
     <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-      <RefreshCw className="animate-spin text-emerald-500 w-12 h-12" />
+      <div className="text-center space-y-4">
+        <RefreshCw className="animate-spin text-emerald-500 w-12 h-12 mx-auto" />
+        <p className="text-sm text-slate-400">Syncing enterprise metrics layers...</p>
+      </div>
     </div>
   );
 
@@ -48,7 +79,7 @@ export default function Dashboard() {
           </h1>
           <p className="text-slate-400 text-sm mt-1">Real-time multi-tenant observability and data isolation logs.</p>
         </div>
-        <button onClick={fetchMetrics} className="bg-emerald-600 hover:bg-emerald-500 transition px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
+        <button onClick={handleForceReload} className="bg-emerald-600 hover:bg-emerald-500 transition px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2">
           <RefreshCw size={16} /> Force Reload
         </button>
       </div>
