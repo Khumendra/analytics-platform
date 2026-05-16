@@ -2,14 +2,14 @@
 # exit on error
 set -o errexit
 
-# Install dependencies
+echo "Installing dependencies..."
 pip install -r requirements.txt
 
-# Run migrations using production configurations 
-python manage.py migrate --settings=core.settings_prod
-
-# Collect static files (if any)
+echo "Collecting static files..."
 python manage.py collectstatic --no-input --settings=core.settings_prod
 
-# Start Celery worker in the background dynamically
-celery -A core worker --loglevel=info --pool=solo &
+echo "Running migrations..."
+python manage.py migrate --settings=core.settings_prod
+
+echo "Seeding initial data to Cloud DB..."
+python manage.py seed_data --settings=core.settings_prod
