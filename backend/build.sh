@@ -10,3 +10,6 @@ python manage.py migrate --settings=core.settings_prod
 
 # Collect static files (if any)
 python manage.py collectstatic --no-input --settings=core.settings_prod
+
+# Start Celery worker in the background dynamically
+celery -A core worker --loglevel=info --pool=solo &
