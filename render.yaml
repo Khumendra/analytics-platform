@@ -1,0 +1,34 @@
+services:
+  # 1. Main API Application Node
+  - type: web
+    name: analytics-api-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt && python manage.py migrate"
+    startCommand: "cd backend && gunicorn core.wsgi:application"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: core.settings
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: analytics-redis-cache
+          property: connectionString
+
+  # 2. Celery Worker Telemetry Ingestion Node
+  - type: worker
+    name: analytics-celery-worker
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && celery -A core worker --loglevel=info"
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: analytics-redis-cache
+          property: connectionString
+
+# Redis Queue Datastore Provider Node
+databases:
+  - type: redis
+    name: analytics-redis-cache
+    ipAllowList: [] # Strict security isolation configurations
