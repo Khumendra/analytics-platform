@@ -15,3 +15,6 @@ frontend/out/
 .env
 .DS_Store
 Thumbs.db
+# Local environment variables
+.env.local
+.env.*.local

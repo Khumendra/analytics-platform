@@ -15,7 +15,6 @@ export default function LoginPage() {
     setError("");
 
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://analytics-backend-api.onrender.com";
-
     try {
       const res = await fetch(`${backendUrl}/api/auth/token/`, {
         method: "POST",
