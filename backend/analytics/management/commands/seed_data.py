@@ -3,6 +3,7 @@ from analytics.models import Organization, User, Event
 from django.utils import timezone
 import random
 
+
 class Command(BaseCommand):
     help = 'Seeds database with production-grade isolated baseline structures'
 
@@ -14,18 +15,21 @@ class Command(BaseCommand):
 
         # Create Baseline Tenant
         org = Organization.objects.create(name="Acme Corp Analytics")
-        
+
         # Create High-Tier Administrative Member Nodes
         admin_user = User.objects.create_user(
-            username="admin", 
-            email="admin@acme.com", 
+            username="admin",
+            email="admin@acme.com",
             password="securepassword123",
             organization=org,
-            role="ADMIN"
+            role="ADMIN",
+            is_staff=True,
+            is_superuser=True
         )
 
         # Seed realistic Time-Series Data arrays
-        event_actions = ["user_signup", "page_view", "payment_success", "api_call_failed"]
+        event_actions = ["user_signup", "page_view",
+                         "payment_success", "api_call_failed"]
         events_pool = []
 
         for i in range(150):
@@ -35,10 +39,12 @@ class Command(BaseCommand):
                 Event(
                     organization=org,
                     event_name=random.choice(event_actions),
-                    properties={"browser": random.choice(["Chrome", "Safari", "Firefox"]), "latency_ms": random.randint(10, 250)},
+                    properties={"browser": random.choice(
+                        ["Chrome", "Safari", "Firefox"]), "latency_ms": random.randint(10, 250)},
                     timestamp=mock_time
                 )
             )
 
         Event.objects.bulk_create(events_pool)
-        self.stdout.write(self.style.SUCCESS('Successfully seeded database cluster nodes cleanly!'))
+        self.stdout.write(self.style.SUCCESS(
+            'Successfully seeded database cluster nodes cleanly!'))

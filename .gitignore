@@ -18,3 +18,4 @@ Thumbs.db
 # Local environment variables
 .env.local
 .env.*.local
+_build.sh
